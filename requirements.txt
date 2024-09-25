@@ -1,0 +1,6 @@
+streamlit
+torch
+python-docx
+pdf2docx
+docx2pdf
+transformers
