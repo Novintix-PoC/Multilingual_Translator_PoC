@@ -139,10 +139,10 @@ def translate_docx(doc_path, src_lang, tgt_langs, download_location, input_file_
         os.makedirs(output_dir, exist_ok=True)
 
         # Save the translated DOCX file
-        # output_docx_path = os.path.join(
-        #     output_dir, f"translated_{src_lang}_to_{tgt_lang}_new_test.docx")
+        output_docx_path = os.path.join(
+            output_dir, f"translated_{src_lang}_to_{tgt_lang}.docx")
 
-        output_docx_path = os.path.join(output_dir, f"test_output_{tgt_lang}.docx")
+        # output_docx_path = os.path.join(output_dir, f"test_output_{tgt_lang}.docx")
         doc.save(output_docx_path)
 
         # Convert DOCX back to PDF if the original file was PDF
@@ -159,8 +159,6 @@ def translate_docx(doc_path, src_lang, tgt_langs, download_location, input_file_
     minutes, seconds = divmod(remainder, 60)
 
     print(f"Translation completed in {hours} hours, {minutes} minutes, and {seconds} seconds.")
-
-    
 
     return translated_files
 
