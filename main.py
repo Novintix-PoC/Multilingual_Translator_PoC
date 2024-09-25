@@ -176,37 +176,28 @@ def main():
         [data-testid=stSidebar] {
             background: linear-gradient(to top, #0e4166 60%, #000000 90%);
             margin-top:60px;
-            
-
         }
 
         [data-testid=stHeader] {
             background: linear-gradient( #0e4166 20%, #000000 100%); #for header
         }
+        [data-testid=stWidgetLabel] {
 
-       
-
-        [data-testid=stFileUploaderDropzone]{
-            background: linear-gradient(to top, #0e4166 0%, #000000 80%); # for file uploader color
-            
+            color:#f4a303;
         }
-
-        [data-baseweb=base-input]{
-            background: linear-gradient(to top, #0e4166 0%, #000000 80%); # for input field
+        element.style{
+            color:#f4a303;
         }
 
         [data-testid=baseButton-secondary]{
             background:#023d60; #for Button background
-            
+            color:#f4a303; # for button text
         }
 
         [data-testid=stAppViewBlockContainer],[data-testid=stVerticalBlock]{
             margin-top:45px; # for centering the content and sidebar
         }
         
-    
-        
-
     <style>""", unsafe_allow_html=True)
     # st.title("Welcome To Novintix Language Translator")
     st.markdown("""
