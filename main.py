@@ -213,9 +213,9 @@ def main():
     # st.title("Welcome To Novintix Language Translator")
     st.markdown("""
         
-        <span style="font-size: 37px; font-weight: bold;color:#023d59;">Welcome to</span>
+        <span style="font-size: 32px; font-weight: bold;color:#023d59;">Welcome to</span>
         <img src="https://novintix.com/wp-content/uploads/2023/12/logov2.png" style="height: 49px;padding:5px;  margin-bottom: 10px;">
-        <span style="font-size: 35px; font-weight: bold; color:#f4a303;">Language Translator</span>
+        <span style="font-size: 30px; font-weight: bold; color:#f4a303;">Language Translator</span>
     """, unsafe_allow_html=True)
    
     # Language selection
