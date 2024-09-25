@@ -176,7 +176,7 @@ def main():
         [data-testid=stSidebar] {
             background: linear-gradient(to top, #0e4166 60%, #000000 90%);
             margin-top:60px;
-            color:#f4a303;
+            
 
         }
 
@@ -184,9 +184,7 @@ def main():
             background: linear-gradient( #0e4166 20%, #000000 100%); #for header
         }
 
-        [data-testid=stMarkdownContainer]{
-            color:#f4a303; # for the dropdown text
-        }
+       
 
         [data-testid=stFileUploaderDropzone]{
             background: linear-gradient(to top, #0e4166 0%, #000000 80%); # for file uploader color
@@ -199,7 +197,7 @@ def main():
 
         [data-testid=baseButton-secondary]{
             background:#023d60; #for Button background
-            color:#f4a303; # for button text
+            
         }
 
         [data-testid=stAppViewBlockContainer],[data-testid=stVerticalBlock]{
