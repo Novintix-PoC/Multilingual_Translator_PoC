@@ -1,3 +1,4 @@
+sentencepiece
 streamlit
 torch
 python-docx
