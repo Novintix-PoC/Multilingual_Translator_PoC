@@ -6,44 +6,6 @@ import datetime
 import os
 from pdf2docx import parse
 import docx2pdf
-import pythoncom
-# Mapping of full language names to language codes
-language_mapping = {
-    "Bulgarian": "bg",
-    "Chinese": "zh",
-    "Croatian": "hr",
-    "Czech": "cs",
-    "Danish": "da",
-    "Dutch": "nl",
-    "Estonian": "et",
-    "English": "en",
-    "Finnish": "fi",
-    "French": "fr",
-    "German": "de",
-    "Greek": "el",
-    "Hungarian": "hu",
-    "Icelandic": "is",
-    "Indonesian": "id",
-    "Italian": "it",
-    "Kazakh": "kk",
-    "Korean": "ko",
-    "Latvian": "lv",
-    "Lithuanian": "lt",
-    "Macedonian": "mk",
-    "Norwegian": "no",
-    "Polish": "pl",
-    "Portuguese": "pt",
-    "Romanian": "ro",
-    "Russian": "ru",
-    "Serbian": "sr",
-    "Slovak": "sk",
-    "Slovenian": "sl",
-    "Spanish": "es",
-    "Swedish": "sv",
-    "Turkish": "tr",
-    "Vietnamese": "vi"
-}
-
 
 st.markdown("""
     <style>
@@ -94,6 +56,43 @@ header_html = f"""
     """
 
 st.markdown(header_html, unsafe_allow_html=True)
+# Mapping of full language names to language codes
+language_mapping = {
+    "Bulgarian": "bg",
+    "Chinese": "zh",
+    "Croatian": "hr",
+    "Czech": "cs",
+    "Danish": "da",
+    "Dutch": "nl",
+    "Estonian": "et",
+    "English": "en",
+    "Finnish": "fi",
+    "French": "fr",
+    "German": "de",
+    "Greek": "el",
+    "Hungarian": "hu",
+    "Icelandic": "is",
+    "Indonesian": "id",
+    "Italian": "it",
+    "Kazakh": "kk",
+    "Korean": "ko",
+    "Latvian": "lv",
+    "Lithuanian": "lt",
+    "Macedonian": "mk",
+    "Norwegian": "no",
+    "Polish": "pl",
+    "Portuguese": "pt",
+    "Romanian": "ro",
+    "Russian": "ru",
+    "Serbian": "sr",
+    "Slovak": "sk",
+    "Slovenian": "sl",
+    "Spanish": "es",
+    "Swedish": "sv",
+    "Turkish": "tr",
+    "Vietnamese": "vi"
+}
+
 # Function to load the translation model and tokenizer
 def load_translation_model():
     model_name = 'facebook/m2m100_418M'
@@ -120,11 +119,11 @@ def copy_run_format(source_run, target_run):
     target_run.font.name = source_run.font.name
     target_run.font.size = source_run.font.size
     target_run.font.color.rgb = source_run.font.color.rgb
-    text=source_run.text
+    text = source_run.text
     if text.isupper():
-        target_run.text=text.upper()
+        target_run.text = text.upper()
     elif text.islower():
-        target_run.text=text.lower()  
+        target_run.text = text.lower()
 
 # Function to translate text while preserving the format and font size
 def translate_text_with_format(paragraph, src_lang, tgt_lang, tokenizer, model):
@@ -152,13 +151,9 @@ def convert_pdf_to_docx(pdf_path, docx_path):
 
 # Function to convert DOCX to PDF using docx2pdf
 def convert_docx_to_pdf(docx_path, pdf_path):
-    pythoncom.CoInitialize()  # Initialize COM library
-    try:
-        docx2pdf.convert(docx_path, pdf_path)
-        print("DOCX to PDF Done...")
-    finally:
-        pythoncom.CoUninitialize()
-    #to delete the converted docx
+    docx2pdf.convert(docx_path, pdf_path)
+    print("DOCX to PDF Done...")
+    # to delete the converted docx
     os.remove('temp.docx')
 
 # Function to translate a DOCX file while maintaining formatting
@@ -196,6 +191,7 @@ def translate_docx(doc_path, src_lang, tgt_langs, download_location, input_file_
         output_docx_path = os.path.join(
             output_dir, f"translated_{src_lang}_to_{tgt_lang}.docx")
 
+        # output_docx_path = os.path.join(output_dir, f"test_output_{tgt_lang}.docx")
         doc.save(output_docx_path)
 
         # Convert DOCX back to PDF if the original file was PDF
@@ -217,10 +213,8 @@ def translate_docx(doc_path, src_lang, tgt_langs, download_location, input_file_
     return translated_files
 
 
-
 def main():
 
-   
     # Language selection
     st.sidebar.title("Select Languages")
     src_lang = st.sidebar.selectbox(
@@ -250,6 +244,9 @@ def main():
             st.warning("Please select a source language.")
         elif not tgt_langs:
             st.warning("Please select at least one target language.")
+        elif not download_location:
+            st.warning("Please enter the download location.")
+
         else:
             with st.spinner("Translating..."):
                 temp_docx_path = os.path.join(download_location, "temp.docx")
