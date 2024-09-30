@@ -6,7 +6,7 @@ import datetime
 import os
 from pdf2docx import parse
 import docx2pdf
-
+import pythoncom
 # Mapping of full language names to language codes
 language_mapping = {
     "Bulgarian": "bg",
@@ -44,6 +44,56 @@ language_mapping = {
     "Vietnamese": "vi"
 }
 
+
+st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+    
+        .stApp {
+            background: linear-gradient(to top, #0e4166 40%, #000000 90%); #for background;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        [data-testid=stSidebar] {
+            background: linear-gradient(to top, #0e4166 60%, #000000 90%); # for sidebar;
+            margin-top:60px;
+        }
+
+        [data-testid=stHeader] {
+            background: linear-gradient( #0e4166 20%, #000000 100%); #for header;
+        }
+        [data-testid=stWidgetLabel] {
+            color:#f4a303; # for small headings;
+        }
+
+        .stHeading h1{ 
+            color:#f4a303; # for Heading "select Languages";
+        }
+
+        [data-testid=stAppViewBlockContainer],[data-testid=stVerticalBlock]{
+            margin-top:30px; # for centering the content and sidebar;
+        }
+
+        .title-container {
+            background: rgb(0,27,44);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            text-align:center;
+            padding:5px;
+            margin-bottom:10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+   
+    <style>""", unsafe_allow_html=True)
+    # st.title("Welcome To Novintix Language Translator")
+header_html = f"""
+    <div class="title-container">
+        <span style="font-size: 30px; font-weight: bold;color:#023d59;">Welcome to</span>
+        <img src="https://novintix.com/wp-content/uploads/2023/12/logov2.png" style="height: 45px;padding:5px;  margin-bottom: 10px;">
+        <span style="font-size: 30px; font-weight: bold; color:#f4a303;">Multilingual Language Translation Tool</span>
+    """
+
+st.markdown(header_html, unsafe_allow_html=True)
 # Function to load the translation model and tokenizer
 def load_translation_model():
     model_name = 'facebook/m2m100_418M'
@@ -102,8 +152,12 @@ def convert_pdf_to_docx(pdf_path, docx_path):
 
 # Function to convert DOCX to PDF using docx2pdf
 def convert_docx_to_pdf(docx_path, pdf_path):
-    docx2pdf.convert(docx_path, pdf_path)
-    print("DOCX to PDF Done...")
+    pythoncom.CoInitialize()  # Initialize COM library
+    try:
+        docx2pdf.convert(docx_path, pdf_path)
+        print("DOCX to PDF Done...")
+    finally:
+        pythoncom.CoUninitialize()
     #to delete the converted docx
     os.remove('temp.docx')
 
@@ -142,13 +196,13 @@ def translate_docx(doc_path, src_lang, tgt_langs, download_location, input_file_
         output_docx_path = os.path.join(
             output_dir, f"translated_{src_lang}_to_{tgt_lang}.docx")
 
-        # output_docx_path = os.path.join(output_dir, f"test_output_{tgt_lang}.docx")
         doc.save(output_docx_path)
 
         # Convert DOCX back to PDF if the original file was PDF
         if input_file_type == 'pdf':
             pdf_output_path = output_docx_path.replace(".docx", ".pdf")
             convert_docx_to_pdf(output_docx_path, pdf_output_path)
+            os.remove(output_docx_path)  # Remove the DOCX file after conversion
             translated_files[tgt_lang] = pdf_output_path
         else:
             translated_files[tgt_lang] = output_docx_path
@@ -163,49 +217,9 @@ def translate_docx(doc_path, src_lang, tgt_langs, download_location, input_file_
     return translated_files
 
 
+
 def main():
-    st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
-    
-        .stApp {
-            background: linear-gradient(to top, #0e4166 40%, #000000 90%);
-            font-family: 'Roboto', sans-serif;
-        }
 
-        [data-testid=stSidebar] {
-            background: linear-gradient(to top, #0e4166 60%, #000000 90%);
-            margin-top:60px;
-        }
-
-        [data-testid=stHeader] {
-            background: linear-gradient( #0e4166 20%, #000000 100%); #for header
-        }
-        [data-testid=stWidgetLabel] {
-
-            color:#f4a303;
-        }
-        element.style{
-            color:#f4a303;
-        }
-
-        [data-testid=baseButton-secondary]{
-            background:#023d60; #for Button background
-            color:#f4a303; # for button text
-        }
-
-        [data-testid=stAppViewBlockContainer],[data-testid=stVerticalBlock]{
-            margin-top:45px; # for centering the content and sidebar
-        }
-        
-    <style>""", unsafe_allow_html=True)
-    # st.title("Welcome To Novintix Language Translator")
-    st.markdown("""
-        
-        <span style="font-size: 32px; font-weight: bold;color:#023d59;">Welcome to</span>
-        <img src="https://novintix.com/wp-content/uploads/2023/12/logov2.png" style="height: 49px;padding:5px;  margin-bottom: 10px;">
-        <span style="font-size: 30px; font-weight: bold; color:#f4a303;">Language Translator</span>
-    """, unsafe_allow_html=True)
    
     # Language selection
     st.sidebar.title("Select Languages")
@@ -226,7 +240,7 @@ def main():
 
     # Download location selection
     download_location = st.text_input(
-        "Enter download location:", value=os.getcwd())
+        "Enter download location:")
 
     # Translate button
     if st.button("Translate"):
