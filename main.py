@@ -6,6 +6,8 @@ import datetime
 import os
 from pdf2docx import parse
 import docx2pdf
+import tempfile
+from io import BytesIO
 
 st.markdown("""
     <style>
@@ -46,72 +48,42 @@ st.markdown("""
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
    
-    <style>""", unsafe_allow_html=True)
-    # st.title("Welcome To Novintix Language Translator")
+    </style>""", unsafe_allow_html=True)
+
 header_html = f"""
     <div class="title-container">
         <span style="font-size: 30px; font-weight: bold;color:#023d59;">Welcome to</span>
         <img src="https://novintix.com/wp-content/uploads/2023/12/logov2.png" style="height: 45px;padding:5px;  margin-bottom: 10px;">
         <span style="font-size: 30px; font-weight: bold; color:#f4a303;">Multilingual Language Translation Tool</span>
+    </div>
     """
 
 st.markdown(header_html, unsafe_allow_html=True)
+
 # Mapping of full language names to language codes
 language_mapping = {
-    "Bulgarian": "bg",
-    "Chinese": "zh",
-    "Croatian": "hr",
-    "Czech": "cs",
-    "Danish": "da",
-    "Dutch": "nl",
-    "Estonian": "et",
-    "English": "en",
-    "Finnish": "fi",
-    "French": "fr",
-    "German": "de",
-    "Greek": "el",
-    "Hungarian": "hu",
-    "Icelandic": "is",
-    "Indonesian": "id",
-    "Italian": "it",
-    "Kazakh": "kk",
-    "Korean": "ko",
-    "Latvian": "lv",
-    "Lithuanian": "lt",
-    "Macedonian": "mk",
-    "Norwegian": "no",
-    "Polish": "pl",
-    "Portuguese": "pt",
-    "Romanian": "ro",
-    "Russian": "ru",
-    "Serbian": "sr",
-    "Slovak": "sk",
-    "Slovenian": "sl",
-    "Spanish": "es",
-    "Swedish": "sv",
-    "Turkish": "tr",
-    "Vietnamese": "vi"
+    "Bulgarian": "bg", "Chinese": "zh", "Croatian": "hr", "Czech": "cs", "Danish": "da",
+    "Dutch": "nl", "Estonian": "et", "English": "en", "Finnish": "fi", "French": "fr",
+    "German": "de", "Greek": "el", "Hungarian": "hu", "Icelandic": "is", "Indonesian": "id",
+    "Italian": "it", "Kazakh": "kk", "Korean": "ko", "Latvian": "lv", "Lithuanian": "lt",
+    "Macedonian": "mk", "Norwegian": "no", "Polish": "pl", "Portuguese": "pt", "Romanian": "ro",
+    "Russian": "ru", "Serbian": "sr", "Slovak": "sk", "Slovenian": "sl", "Spanish": "es",
+    "Swedish": "sv", "Turkish": "tr", "Vietnamese": "vi"
 }
 
-# Function to load the translation model and tokenizer
 def load_translation_model():
     model_name = 'facebook/m2m100_418M'
     tokenizer = M2M100Tokenizer.from_pretrained(model_name)
     model = M2M100ForConditionalGeneration.from_pretrained(model_name)
     return tokenizer, model
 
-# Function to translate text
 def translate_text(text: str, src_lang: str, tgt_lang: str, tokenizer, model):
     tokenizer.src_lang = src_lang
-    encoded = tokenizer(text, return_tensors="pt",
-                        padding=True, truncation=True)
-    generated_tokens = model.generate(
-        **encoded, forced_bos_token_id=tokenizer.get_lang_id(tgt_lang))
-    translated_text = tokenizer.batch_decode(
-        generated_tokens, skip_special_tokens=True)[0]
+    encoded = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+    generated_tokens = model.generate(**encoded, forced_bos_token_id=tokenizer.get_lang_id(tgt_lang))
+    translated_text = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
     return translated_text
 
-# Function to copy formatting from one run to another
 def copy_run_format(source_run, target_run):
     target_run.bold = source_run.bold
     target_run.italic = source_run.italic
@@ -125,80 +97,49 @@ def copy_run_format(source_run, target_run):
     elif text.islower():
         target_run.text = text.lower()
 
-# Function to translate text while preserving the format and font size
 def translate_text_with_format(paragraph, src_lang, tgt_lang, tokenizer, model):
     new_runs = []
     for run in paragraph.runs:
-        # Translate text
-        translated_text = translate_text(
-            run.text, src_lang, tgt_lang, tokenizer, model)
-
-        # Check and preserve the trademark symbol ("™")
+        translated_text = translate_text(run.text, src_lang, tgt_lang, tokenizer, model)
         if "™" in run.text:
             translated_text = translated_text.replace("TM", "™")
-
-        # Add a new run with the translated text
         new_run = paragraph.add_run(translated_text)
         copy_run_format(run, new_run)
-
-        # Clear the original run's text to avoid duplication
         run.clear()
 
-# Function to convert PDF to DOCX using pdf2docx
 def convert_pdf_to_docx(pdf_path, docx_path):
     parse(pdf_path, docx_path, start=0, end=None)
     print("PDF to DOCX Done...")
 
-# Function to convert DOCX to PDF using docx2pdf
 def convert_docx_to_pdf(docx_path, pdf_path):
     docx2pdf.convert(docx_path, pdf_path)
     print("DOCX to PDF Done...")
-    # to delete the converted docx
-    os.remove('temp.docx')
 
-# Function to translate a DOCX file while maintaining formatting
-def translate_docx(doc_path, src_lang, tgt_langs, download_location, input_file_type):
+def translate_docx(doc_path, src_lang, tgt_langs, temp_dir, input_file_type):
     start_time = datetime.datetime.now()
-
-    # Load the translation model and tokenizer
     tokenizer, model = load_translation_model()
-
     translated_files = {}
 
     for tgt_lang in tgt_langs:
-        # Reload the DOCX file for each target language
         doc = Document(doc_path)
 
-        # Translate paragraphs
         for para in doc.paragraphs:
-            if para.text.strip():  # Check if the paragraph is not empty
-                translate_text_with_format(
-                    para, language_mapping[src_lang], language_mapping[tgt_lang], tokenizer, model)
+            if para.text.strip():
+                translate_text_with_format(para, language_mapping[src_lang], language_mapping[tgt_lang], tokenizer, model)
 
-        # Translate tables
         for table in doc.tables:
             for row in table.rows:
                 for cell in row.cells:
-                    if cell.text.strip():  # Check if the cell is not empty
-                        cell.text = translate_text(
-                            cell.text, language_mapping[src_lang], language_mapping[tgt_lang], tokenizer, model)
+                    if cell.text.strip():
+                        cell.text = translate_text(cell.text, language_mapping[src_lang], language_mapping[tgt_lang], tokenizer, model)
 
-        # Ensure output directory exists
-        output_dir = os.path.join(download_location, "output")
-        os.makedirs(output_dir, exist_ok=True)
-
-        # Save the translated DOCX file
-        output_docx_path = os.path.join(
-            output_dir, f"translated_{src_lang}_to_{tgt_lang}.docx")
-
-        # output_docx_path = os.path.join(output_dir, f"test_output_{tgt_lang}.docx")
+        output_docx_path = os.path.join(temp_dir, f"translated_{src_lang}_to_{tgt_lang}.docx")
         doc.save(output_docx_path)
 
-        # Convert DOCX back to PDF if the original file was PDF
         if input_file_type == 'pdf':
             pdf_output_path = output_docx_path.replace(".docx", ".pdf")
             convert_docx_to_pdf(output_docx_path, pdf_output_path)
-            os.remove(output_docx_path)  # Remove the DOCX file after conversion
+            os.remove(output_docx_path)
             translated_files[tgt_lang] = pdf_output_path
         else:
             translated_files[tgt_lang] = output_docx_path
@@ -212,31 +153,13 @@ def translate_docx(doc_path, src_lang, tgt_langs, download_location, input_file_
 
     return translated_files
 
-
 def main():
-
-    # Language selection
     st.sidebar.title("Select Languages")
-    src_lang = st.sidebar.selectbox(
-        "Select source language:", list(language_mapping.keys()))
-    tgt_langs = st.sidebar.multiselect(
-        "Select target languages:", list(language_mapping.keys()))
+    src_lang = st.sidebar.selectbox("Select source language:", list(language_mapping.keys()))
+    tgt_langs = st.sidebar.multiselect("Select target languages:", list(language_mapping.keys()))
 
-    # File uploader for Word or PDF file
-    input_file = st.file_uploader(
-        "Upload Word or PDF file for translation:", type=["docx", "pdf"])
+    input_file = st.file_uploader("Upload Word or PDF file for translation:", type=["docx", "pdf"])
 
-    if input_file:
-        input_file_type = input_file.name.split('.')[-1].lower()
-        input_file_path = os.path.join(os.getcwd(), input_file.name)
-        with open(input_file_path, 'wb') as f:
-            f.write(input_file.read())
-
-    # Download location selection
-    download_location = st.text_input(
-        "Enter download location:")
-
-    # Translate button
     if st.button("Translate"):
         if not input_file:
             st.warning("Please upload a Word or PDF file for translation.")
@@ -244,25 +167,34 @@ def main():
             st.warning("Please select a source language.")
         elif not tgt_langs:
             st.warning("Please select at least one target language.")
-        elif not download_location:
-            st.warning("Please enter the download location.")
-
         else:
             with st.spinner("Translating..."):
-                temp_docx_path = os.path.join(download_location, "temp.docx")
-                if input_file_type == 'pdf':
-                    # Convert PDF to DOCX
-                    convert_pdf_to_docx(input_file_path, temp_docx_path)
-                else:
-                    temp_docx_path = input_file_path
+                input_file_type = input_file.name.split('.')[-1].lower()
+                
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    temp_input_path = os.path.join(temp_dir, input_file.name)
+                    with open(temp_input_path, 'wb') as f:
+                        f.write(input_file.getvalue())
+                    
+                    temp_docx_path = os.path.join(temp_dir, "temp.docx")
+                    if input_file_type == 'pdf':
+                        convert_pdf_to_docx(temp_input_path, temp_docx_path)
+                    else:
+                        temp_docx_path = temp_input_path
 
-                translated_files = translate_docx(
-                    temp_docx_path, src_lang, tgt_langs, download_location, input_file_type)
-                st.success(
-                    "Translation completed. Output files saved successfully.")
-                st.info(
-                    f"Translated files saved in {os.path.join(download_location, 'output')}")
-
+                    translated_files = translate_docx(temp_docx_path, src_lang, tgt_langs, temp_dir, input_file_type)
+                    
+                    st.success("Translation completed. You can now download the files.")
+                    
+                    for lang, file_path in translated_files.items():
+                        with open(file_path, 'rb') as file:
+                            file_content = file.read()
+                        st.download_button(
+                            label=f"Download {lang} translation",
+                            data=file_content,
+                            file_name=os.path.basename(file_path),
+                            mime='application/octet-stream'
+                        )
 
 if __name__ == "__main__":
     main()
