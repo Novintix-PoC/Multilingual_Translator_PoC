@@ -53,7 +53,7 @@ header_html = f"""
     <div class="title-container">
         <span style="font-size: 30px; font-weight: bold;color:#023d59;">Welcome to</span>
         <img src="https://novintix.com/wp-content/uploads/2023/12/logov2.png" style="height: 45px;padding:5px;  margin-bottom: 10px;">
-        <span style="font-size: 30px; font-weight: bold; color:#f4a303;">Multilingual Language Translation Tool</span>
+        <span style="font-size: 30px; font-weight: bold; color:#f4a303;">Multilingual Translator</span>
     </div>
     """
 
