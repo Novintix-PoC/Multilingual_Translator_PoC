@@ -111,10 +111,6 @@ def convert_pdf_to_docx(pdf_path, docx_path):
     parse(pdf_path, docx_path, start=0, end=None)
     print("PDF to DOCX Done...")
 
-def convert_docx_to_pdf(docx_path, pdf_path):
-    docx2pdf.convert(docx_path, pdf_path)
-    print("DOCX to PDF Done...")
-
 def translate_docx(doc_path, src_lang, tgt_langs, temp_dir, input_file_type):
     start_time = datetime.datetime.now()
     tokenizer, model = load_translation_model()
@@ -135,14 +131,8 @@ def translate_docx(doc_path, src_lang, tgt_langs, temp_dir, input_file_type):
 
         output_docx_path = os.path.join(temp_dir, f"translated_{src_lang}_to_{tgt_lang}.docx")
         doc.save(output_docx_path)
-
-        if input_file_type == 'pdf':
-            pdf_output_path = output_docx_path.replace(".docx", ".pdf")
-            convert_docx_to_pdf(output_docx_path, pdf_output_path)
-            os.remove(output_docx_path)
-            translated_files[tgt_lang] = pdf_output_path
-        else:
-            translated_files[tgt_lang] = output_docx_path
+        os.remove(output_docx_path)
+        translated_files[tgt_lang] = output_docx_path
 
     end_time = datetime.datetime.now()
     time_diff = end_time - start_time
