@@ -5,36 +5,34 @@ from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
 import datetime
 import os
 from pdf2docx import parse
+import docx2pdf
 import tempfile
 from io import BytesIO
 
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
-
+    
         .stApp {
-            background: linear-gradient(to top, #0e4166 40%, #000000 90%);
+            background: linear-gradient(to top, #0e4166 40%, #000000 90%); #for background;
             font-family: 'Roboto', sans-serif;
         }
 
         [data-testid=stSidebar] {
-            background: linear-gradient(to top, #0e4166 60%, #000000 90%);
+            background: linear-gradient(to top, #0e4166 60%, #000000 90%); # for sidebar;
             margin-top:60px;
         }
 
         [data-testid=stHeader] {
-            background: linear-gradient( #0e4166 20%, #000000 100%);
+            background: linear-gradient( #0e4166 20%, #000000 100%); #for header;
         }
         [data-testid=stWidgetLabel] {
-            color:#f4a303;
+            color:#f4a303; # for small headings;
         }
 
-        .stHeading h1{ 
-            color:#f4a303;
-        }
 
         [data-testid=stAppViewBlockContainer],[data-testid=stVerticalBlock]{
-            margin-top:30px;
+            margin-top:30px; # for centering the content and sidebar;
         }
 
         .title-container {
@@ -70,7 +68,6 @@ language_mapping = {
     "Swedish": "sv", "Turkish": "tr", "Vietnamese": "vi"
 }
 
-@st.cache_resource
 def load_translation_model():
     model_name = 'facebook/m2m100_418M'
     tokenizer = M2M100Tokenizer.from_pretrained(model_name)
@@ -90,30 +87,28 @@ def copy_run_format(source_run, target_run):
     target_run.underline = source_run.underline
     target_run.font.name = source_run.font.name
     target_run.font.size = source_run.font.size
-    if source_run.font.color.rgb:
-        target_run.font.color.rgb = source_run.font.color.rgb
+    target_run.font.color.rgb = source_run.font.color.rgb
     text = source_run.text
     if text.isupper():
         target_run.text = text.upper()
     elif text.islower():
         target_run.text = text.lower()
-    else:
-        target_run.text = text  # Preserve original casing if mixed
 
 def translate_text_with_format(paragraph, src_lang, tgt_lang, tokenizer, model):
     new_runs = []
     for run in paragraph.runs:
-        if run.text.strip():  # Only translate non-empty runs
-            translated_text = translate_text(run.text, src_lang, tgt_lang, tokenizer, model)
-            if "™" in run.text:
-                translated_text = translated_text.replace("TM", "™")
-            new_run = paragraph.add_run(translated_text)
-            copy_run_format(run, new_run)
-            run.clear()
+        translated_text = translate_text(run.text, src_lang, tgt_lang, tokenizer, model)
+        if "™" in run.text:
+            translated_text = translated_text.replace("TM", "™")
+        new_run = paragraph.add_run(translated_text)
+        copy_run_format(run, new_run)
+        run.clear()
 
 def convert_pdf_to_docx(pdf_path, docx_path):
     parse(pdf_path, docx_path, start=0, end=None)
-    print("PDF to DOCX Conversion Done...")
+    print("PDF to DOCX Done...")
+
+
 
 def translate_docx(doc_path, src_lang, tgt_langs, temp_dir, input_file_type):
     start_time = datetime.datetime.now()
@@ -134,9 +129,8 @@ def translate_docx(doc_path, src_lang, tgt_langs, temp_dir, input_file_type):
                         cell.text = translate_text(cell.text, language_mapping[src_lang], language_mapping[tgt_lang], tokenizer, model)
 
         output_docx_path = os.path.join(temp_dir, f"translated_{src_lang}_to_{tgt_lang}.docx")
-        doc.save(output_docx_path)
-
-        # **Removed PDF conversion to keep output in DOCX format**
+        doc.save(output_docx_path)  
+     
         translated_files[tgt_lang] = output_docx_path
 
     end_time = datetime.datetime.now()
@@ -171,8 +165,8 @@ def main():
                     with open(temp_input_path, 'wb') as f:
                         f.write(input_file.getvalue())
                     
+                    temp_docx_path = os.path.join(temp_dir, "temp.docx")
                     if input_file_type == 'pdf':
-                        temp_docx_path = os.path.join(temp_dir, "temp.docx")
                         convert_pdf_to_docx(temp_input_path, temp_docx_path)
                     else:
                         temp_docx_path = temp_input_path
@@ -185,10 +179,10 @@ def main():
                         with open(file_path, 'rb') as file:
                             file_content = file.read()
                         st.download_button(
-                            label=f"Download {lang} translation (DOCX)",
+                            label=f"Download {lang} translation",
                             data=file_content,
                             file_name=os.path.basename(file_path),
-                            mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                            mime='application/octet-stream'
                         )
 
 if __name__ == "__main__":
